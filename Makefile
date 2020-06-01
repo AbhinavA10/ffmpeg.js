@@ -9,14 +9,7 @@ POST_JS_WORKER = build/post-worker.js
 COMMON_FILTERS = aresample scale crop overlay hstack vstack
 COMMON_DEMUXERS = matroska ogg mov mp3 wav image2 concat
 COMMON_DECODERS = vp8 h264 vorbis opus mp3 aac pcm_s16le mjpeg png
-
-WEBM_MUXERS = webm ogg null
-WEBM_ENCODERS = libvpx_vp8 libopus
-FFMPEG_WEBM_BC = build/ffmpeg-webm/ffmpeg.bc
-FFMPEG_WEBM_PC_PATH = ../opus/dist/lib/pkgconfig
-WEBM_SHARED_DEPS = \
-	build/opus/dist/lib/libopus.so \
-	build/libvpx/dist/lib/libvpx.so
+# need h264 decoder
 
 MP4_MUXERS = mp4 mp3 null
 MP4_ENCODERS = libx264 libmp3lame aac
@@ -26,71 +19,19 @@ MP4_SHARED_DEPS = \
 	build/lame/dist/lib/libmp3lame.so \
 	build/x264/dist/lib/libx264.so
 
-all: webm mp4
-webm: ffmpeg-webm.js ffmpeg-worker-webm.js
+all: mp4
 mp4: ffmpeg-mp4.js ffmpeg-worker-mp4.js
 
 clean: clean-js \
-	clean-opus clean-libvpx clean-ffmpeg-webm \
 	clean-lame clean-x264 clean-ffmpeg-mp4
 clean-js:
 	rm -f ffmpeg*.js
-clean-opus:
-	cd build/opus && git clean -xdf
-clean-libvpx:
-	cd build/libvpx && git clean -xdf
-clean-ffmpeg-webm:
-	cd build/ffmpeg-webm && git clean -xdf
 clean-lame:
 	cd build/lame && git clean -xdf
 clean-x264:
 	cd build/x264 && git clean -xdf
 clean-ffmpeg-mp4:
 	cd build/ffmpeg-mp4 && git clean -xdf
-
-build/opus/configure:
-	cd build/opus && ./autogen.sh
-
-build/opus/dist/lib/libopus.so: build/opus/configure
-	cd build/opus && \
-	emconfigure ./configure \
-		CFLAGS=-O3 \
-		--prefix="$$(pwd)/dist" \
-		--disable-static \
-		--disable-doc \
-		--disable-extra-programs \
-		--disable-asm \
-		--disable-rtcd \
-		--disable-intrinsics \
-		--disable-hardening \
-		--disable-stack-protector \
-		&& \
-	emmake make -j && \
-	emmake make install
-
-build/libvpx/dist/lib/libvpx.so:
-	cd build/libvpx && \
-	git reset --hard && \
-	patch -p1 < ../libvpx-fix-ld.patch && \
-	emconfigure ./configure \
-		--prefix="$$(pwd)/dist" \
-		--target=generic-gnu \
-		--disable-dependency-tracking \
-		--disable-multithread \
-		--disable-runtime-cpu-detect \
-		--enable-shared \
-		--disable-static \
-		\
-		--disable-examples \
-		--disable-docs \
-		--disable-unit-tests \
-		--disable-webm-io \
-		--disable-libyuv \
-		--disable-vp8-decoder \
-		--disable-vp9 \
-		&& \
-	emmake make -j && \
-	emmake make install
 
 build/lame/dist/lib/libmp3lame.so:
 	cd build/lame/lame && \
@@ -185,20 +126,6 @@ FFMPEG_COMMON_ARGS = \
 	--disable-xlib \
 	--enable-zlib
 
-build/ffmpeg-webm/ffmpeg.bc: $(WEBM_SHARED_DEPS)
-	cd build/ffmpeg-webm && \
-	EM_PKG_CONFIG_PATH=$(FFMPEG_WEBM_PC_PATH) emconfigure ./configure \
-		$(FFMPEG_COMMON_ARGS) \
-		$(addprefix --enable-encoder=,$(WEBM_ENCODERS)) \
-		$(addprefix --enable-muxer=,$(WEBM_MUXERS)) \
-		--enable-libopus \
-		--enable-libvpx \
-		--extra-cflags="-s USE_ZLIB=1 -I../libvpx/dist/include" \
-		--extra-ldflags="-L../libvpx/dist/lib" \
-		&& \
-	emmake make -j && \
-	cp ffmpeg ffmpeg.bc
-
 build/ffmpeg-mp4/ffmpeg.bc: $(MP4_SHARED_DEPS)
 	cd build/ffmpeg-mp4 && \
 	EM_PKG_CONFIG_PATH=$(FFMPEG_MP4_PC_PATH) emconfigure ./configure \
@@ -228,16 +155,6 @@ EMCC_COMMON_ARGS = \
 	-lnodefs.js -lworkerfs.js \
 	--pre-js $(PRE_JS) \
 	-o $@
-
-ffmpeg-webm.js: $(FFMPEG_WEBM_BC) $(PRE_JS) $(POST_JS_SYNC)
-	emcc $(FFMPEG_WEBM_BC) $(WEBM_SHARED_DEPS) \
-		--post-js $(POST_JS_SYNC) \
-		$(EMCC_COMMON_ARGS)
-
-ffmpeg-worker-webm.js: $(FFMPEG_WEBM_BC) $(PRE_JS) $(POST_JS_WORKER)
-	emcc $(FFMPEG_WEBM_BC) $(WEBM_SHARED_DEPS) \
-		--post-js $(POST_JS_WORKER) \
-		$(EMCC_COMMON_ARGS)
 
 ffmpeg-mp4.js: $(FFMPEG_MP4_BC) $(PRE_JS) $(POST_JS_SYNC)
 	emcc $(FFMPEG_MP4_BC) $(MP4_SHARED_DEPS) \

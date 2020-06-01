@@ -129,7 +129,7 @@ ffmpeg({
 
 ## Build instructions
 
-It's recommended to use [Docker](https://www.docker.com/) to build ffmpeg.js.
+It's recommended to use [Docker](https://www.docker.com/) to build ffmpeg.js. This was using "Ubuntu 19.10" when tested.
 
 1.  Clone ffmpeg.js repository with submodules:
     ```bash
@@ -143,7 +143,7 @@ It's recommended to use [Docker](https://www.docker.com/) to build ffmpeg.js.
     ```bash
     git submodule foreach --recursive '[ -f .git ] && echo "gitdir: $(realpath --relative-to=. $(cut -d" " -f2 .git))" > .git'
     ```
-4.  Start the Docker everything:
+4.  Start the Docker container (TODO: use modified dockerfile):
     ```bash
     docker run --rm -it -v /path/to/ffmpeg.js:/mnt -w /opt kagamihi/ffmpeg.js
     ```
