@@ -138,10 +138,18 @@ It's recommended to use [Docker](https://www.docker.com/) to build ffmpeg.js.
 
 2.  Modify Makefile and/or patches if you wish to make a custom build.
 
-3.  Build everything:
+3.  Run this command to change absolute path git submodules to relative:
+      From https://stackoverflow.com/questions/10953953/ensuring-relative-git-paths
+    ```bash
+    git submodule foreach --recursive '[ -f .git ] && echo "gitdir: $(realpath --relative-to=. $(cut -d" " -f2 .git))" > .git'
+    ```
+4.  Start the Docker everything:
     ```bash
     docker run --rm -it -v /path/to/ffmpeg.js:/mnt -w /opt kagamihi/ffmpeg.js
-    # cp -a /mnt/{.git,build,Makefile} . && source /root/emsdk/emsdk_env.sh && make && cp ffmpeg*.js /mnt
+    ```
+5.  Build everything: We copy `.git`, `build`, and `Makefile` files from `/mnt/` to current directory (`/opt`) then `make`
+    ```bash
+    cp -a /mnt/{.git,build,Makefile} . && source /root/emsdk/emsdk_env.sh && make && cp ffmpeg*.js /mnt
     ```
 
 That's it. ffmpeg.js modules should appear in your repository clone.
