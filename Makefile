@@ -7,11 +7,11 @@ POST_JS_SYNC = build/post-sync.js
 POST_JS_WORKER = build/post-worker.js
 
 COMMON_FILTERS = aresample scale crop overlay hstack vstack
-COMMON_DEMUXERS = matroska ogg mov mp3 wav image2 concat
+COMMON_DEMUXERS = matroska ogg mov mp3 wav image2 concat rtsp
 COMMON_DECODERS = vp8 h264 vorbis opus mp3 aac pcm_s16le mjpeg png
 # need h264 decoder
 
-MP4_MUXERS = mp4 mp3 null
+MP4_MUXERS = mp4 mp3 null mpegts
 MP4_ENCODERS = libx264 libmp3lame aac
 FFMPEG_MP4_BC = build/ffmpeg-mp4/ffmpeg.bc
 FFMPEG_MP4_PC_PATH = ../x264/dist/lib/pkgconfig
@@ -108,7 +108,7 @@ FFMPEG_COMMON_ARGS = \
 	--enable-avfilter \
 	--enable-swresample \
 	--enable-swscale \
-	--disable-network \
+	--enable-network \
 	--disable-d3d11va \
 	--disable-dxva2 \
 	--disable-vaapi \
@@ -116,6 +116,9 @@ FFMPEG_COMMON_ARGS = \
 	$(addprefix --enable-decoder=,$(COMMON_DECODERS)) \
 	$(addprefix --enable-demuxer=,$(COMMON_DEMUXERS)) \
 	--enable-protocol=file \
+	--enable-protocol=tcp \
+	--enable-protocol=udp \
+	--enable-protocol=rtp \
 	$(addprefix --enable-filter=,$(COMMON_FILTERS)) \
 	--disable-bzlib \
 	--disable-iconv \
